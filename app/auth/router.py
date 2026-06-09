@@ -6,6 +6,8 @@ from app.auth.service import AuthService, create_access_token, create_refresh_to
 from app.auth.oauth import oauth
 from starlette.requests import Request
 from app.auth.repository import UserRepository
+from app.core.dependencies import get_current_user
+from app.auth.models import User
 
 router = APIRouter()
 
@@ -44,3 +46,7 @@ async def google_callback(request: Request, session: AsyncSession = Depends(get_
     access_token = create_access_token({"sub": str(user.id)})
     refresh_token = create_refresh_token({"sub": str(user.id)})
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+
+@router.get("/auth/me", response_model=UserResponse)
+async def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
