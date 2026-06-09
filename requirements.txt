@@ -15,3 +15,6 @@ httpx
 python-multipart
 redis
 greenlet
+authlib
+httpx
+itsdangerous
