@@ -20,3 +20,4 @@ httpx
 itsdangerous
 pgvector
 fastembed
+celery

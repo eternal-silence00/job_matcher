@@ -40,3 +40,7 @@ class JobRepository:
                                             .limit(limit)
                                             )
         return result.scalars().all()
+    
+    async def get_by_url(self, url: str):
+        result = await self.session.execute(select(Job).where(Job.url == url))
+        return result.scalar_one_or_none()
