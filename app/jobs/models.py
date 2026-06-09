@@ -19,5 +19,5 @@ class Job(Base):
     location: Mapped[str] = mapped_column(nullable=False)
     published_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True))
     embedding: Mapped[list] = mapped_column(Vector(384), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(default=lambda:datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc))
     
