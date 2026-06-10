@@ -5,6 +5,7 @@ from alembic import context
 from app.core.base import Base
 from app.auth.models import User
 from app.jobs.models import Job
+from app.resumes.models import Resume
 from app.core.config import settings
 
 config = context.config
