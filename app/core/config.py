@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     MINIO_USER: str
     MINIO_PASSWORD: str
     MINIO_URL: str
+    MINIO_PUBLIC_URL: str
     GROQ_API_KEY: str
     
     
