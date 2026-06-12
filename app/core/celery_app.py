@@ -4,7 +4,7 @@ from celery.schedules import crontab
 
 celery_app = Celery(
     "job_matcher",
-    broker=settings.REDIS_URL,
+    broker=settings.RABBITMQ_URL,
     backend=settings.REDIS_URL,
     include=["app.tasks.parse_jobs"]
 )
