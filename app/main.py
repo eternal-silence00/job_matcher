@@ -8,7 +8,7 @@ from app.core.config import settings
 
 
 
-app = FastAPI()
+app = FastAPI(root_path="/api")
 
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
