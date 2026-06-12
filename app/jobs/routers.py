@@ -9,7 +9,7 @@ from app.core.dependencies import get_admin_user
 router = APIRouter()
 
 
-@router.post("/jobs", response_model=JobResponse)
+@router.post("/jobs", response_model=JobResponse, status_code=201)
 async def create_job(
     data: JobCreate,
     session: AsyncSession = Depends(get_db),
