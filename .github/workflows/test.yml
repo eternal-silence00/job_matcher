@@ -1,0 +1,65 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: job_matcher_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Run tests
+        env:
+          TEST_DATABASE_URL: postgresql+asyncpg://postgres:password@localhost:5432/job_matcher_test
+          DATABASE_URL: postgresql+asyncpg://postgres:password@localhost:5432/job_matcher_test
+          REDIS_URL: redis://localhost:6379
+          RABBITMQ_URL: amqp://placeholder
+          SECRET_KEY: testsecret
+          ALGORITHM: HS256
+          CLIENT_ID: placeholder
+          CLIENT_SECRET: placeholder
+          MINIO_USER: placeholder
+          MINIO_PASSWORD: placeholder
+          MINIO_URL: http://localhost:9000
+          MINIO_PUBLIC_URL: http://localhost:9000
+          GROQ_API_KEY: placeholder
+          MAIL_USERNAME: placeholder
+          MAIL_PASSWORD: placeholder
+          MAIL_FROM: test@test.com
+          MAIL_PORT: 587
+          MAIL_SERVER: smtp.test.com
+        run: pytest tests/ -v
