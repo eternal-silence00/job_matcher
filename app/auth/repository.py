@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.models import User
 from sqlalchemy import select
 from typing import Optional
+from app.resumes.models import Resume
 
 class UserRepository:
     
@@ -23,4 +24,9 @@ class UserRepository:
     async def get_by_id(self, user_id: int):
         result = await self.session.execute(select(User).where(User.id == user_id))
         return result.scalar_one_or_none()
+    
+    
+    async def get_all_with_resumes(self):
+        result = await self.session.execute(select(User).join(Resume, User.id == Resume.user_id))
+        return result.scalars().all()
     
