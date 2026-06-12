@@ -3,6 +3,8 @@ from app.jobs.service import JobService
 from app.jobs.schemas import JobCreate, JobResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
+from app.auth.models import User
+from app.core.dependencies import get_admin_user
 
 router = APIRouter()
 
@@ -11,6 +13,7 @@ router = APIRouter()
 async def create_job(
     data: JobCreate,
     session: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_admin_user)
 ):
     service = JobService(session)
     job = await service.create_job(data)
