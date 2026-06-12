@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.jobs.models import Job
-from sqlalchemy import select, text
+from sqlalchemy import select, text, delete
+from datetime import datetime, timezone, timedelta
 
 
 class JobRepository:
@@ -44,3 +45,7 @@ class JobRepository:
     async def get_by_url(self, url: str):
         result = await self.session.execute(select(Job).where(Job.url == url))
         return result.scalar_one_or_none()
+    
+    async def delete_old(self, days: int):
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        await self.session.execute(delete(Job).where(Job.created_at < cutoff))

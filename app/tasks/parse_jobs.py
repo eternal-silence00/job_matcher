@@ -14,21 +14,27 @@ from datetime import datetime
 @celery_app.task
 def parse_jobs():
     asyncio.run(_parse_jobs())
+    
+TAGS = ["python", "javascript", "golang", "java", "backend"]
 
 async def _parse_jobs():
+    
     engine = create_async_engine(settings.DATABASE_URL)
     SessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     
     async with httpx.AsyncClient() as client:
-        response = await client.get("https://remoteok.com/api?tags=python")
-        jobs = response.json()
-        jobs = [j for j in jobs if j.get("position")]
+        all_jobs = []
+        for tag in TAGS:
+            response = await client.get(f"https://remoteok.com/api?tags={tag}")
+            jobs = response.json()
+            jobs = [j for j in jobs if j.get("position")]
+            all_jobs.extend(jobs)
     
     async with SessionLocal() as session:
         repo = JobRepository(session)
         embedding_service = EmbeddingService()
         
-        for job in jobs:
+        for job in all_jobs:
             title = job.get("position")
             company = job.get("company")
             url = job.get("url")
