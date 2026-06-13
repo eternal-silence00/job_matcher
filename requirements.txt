@@ -25,3 +25,4 @@ boto3
 pypdf
 fastapi_mail
 pytest
+pydantic[email]
