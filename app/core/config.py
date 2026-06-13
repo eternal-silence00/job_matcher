@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     MAIL_FROM: str
     MAIL_PORT: int = 587
     MAIL_SERVER: str
+    MAX_RESUME_SIZE_BYTES: int = 5 * 1024 * 1024
     
     
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")

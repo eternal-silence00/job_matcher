@@ -1,16 +1,17 @@
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile
 from app.resumes.service import ResumeService
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.resumes.schemas import ResumeResponse
 from app.auth.models import User
+from app.resumes.dependencies import validate_pdf
 
 router = APIRouter()
 
 @router.post("/resumes", response_model=ResumeResponse)
 async def post_resume(
-    file: UploadFile = File(...),
+    file: UploadFile = Depends(validate_pdf),
     session: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
