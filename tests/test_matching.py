@@ -10,7 +10,7 @@ async def test_matching_jobs(client_with_token):
         storage_mock.return_value.get_file_url.return_value = "http://fake-url"
         embedding_mock.return_value.get_embedding.return_value = [0.1] * 384
         
-        files = {"file": ("test.pdf", b"fake pdf content", "application/pdf")}
+        files = {"file": ("test.pdf", b"%PDF-1.4\nfake pdf content", "application/pdf")}
         await client_with_token.post("/resumes", files=files)
         
         response = await client_with_token.get("/matching/jobs")

@@ -7,12 +7,11 @@ from app.resumes.repository import ResumeRepository
 
 class ResumeService:
     
-    def __init__(self, 
-        session: AsyncSession):
+    def __init__(self, session, storage=None, pdf=None, embedding=None):
         self.session = session
-        self.storage_service = StorageService()
-        self.pdf_service = PdfService()
-        self.embedding_service = EmbeddingService()
+        self.storage_service = storage or StorageService()
+        self.pdf_service = pdf or PdfService()
+        self.embedding_service = embedding or EmbeddingService()
         
     async def upload_resume(self, user_id: int, file):
         text = self.pdf_service.extract_text(file.file)
