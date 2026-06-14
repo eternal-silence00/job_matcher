@@ -26,3 +26,4 @@ pypdf
 fastapi_mail
 pytest
 pydantic[email]
+slowapi

@@ -3,10 +3,14 @@ from fastapi import Security
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.config import settings
-from jose import JWTError, jwt
+from jose import JWTError, jwt, ExpiredSignatureError
 from app.auth.repository import UserRepository
 from fastapi import HTTPException, Depends
 from app.auth.models import User
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 
 SECRET_KEY = settings.SECRET_KEY
@@ -24,16 +28,24 @@ async def get_current_user(
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get('sub')
         if not user_id:
+            logger.warning("auth failed reason=missing_sub")
             raise HTTPException(status_code=401, detail="Invalid token")
+    except ExpiredSignatureError:
+        logger.info("auth failed reason=token_expired")   # это норма, INFO
+        raise HTTPException(401, "Token expired")
     except JWTError:
+        logger.warning("auth failed reason=invalid_jwt")
         raise HTTPException(status_code=401, detail="Invalid token")
     repo = UserRepository(db)
     user = await repo.get_by_id(int(user_id))
     if not user:
+        logger.warning("auth failed reason=user_not_found user_id=%s", user_id)
         raise HTTPException(status_code=401, detail="User not found")
     return user
 
 async def get_admin_user(current_user: User = Depends(get_current_user)):
     if current_user.role != "admin":
+        logger.warning("admin access denied user_id=%s role=%s",
+                       current_user.id, current_user.role)
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user

@@ -4,6 +4,9 @@ from app.core.pdf_service import PdfService
 from app.core.storage_service import StorageService
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.resumes.repository import ResumeRepository
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ResumeService:
     
@@ -24,6 +27,7 @@ class ResumeService:
             resume = await repo.update(user_id, file.filename, text, embedding)
             return resume
         resume = await repo.create(user_id, file.filename, text, embedding)
+        logger.info("resume uploaded user_id=%s filename=%s", user_id, file.filename)
         return resume
         
         

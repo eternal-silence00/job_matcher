@@ -25,3 +25,5 @@ celery_app.conf.beat_schedule = {
     "schedule": crontab(minute=0, hour=3),
     }
 }
+
+celery_app.conf.worker_hijack_root_logger = False

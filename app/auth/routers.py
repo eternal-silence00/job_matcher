@@ -9,6 +9,9 @@ from app.auth.repository import UserRepository
 from app.core.dependencies import get_current_user
 from app.auth.models import User
 from fastapi.responses import RedirectResponse
+import logging 
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -41,6 +44,7 @@ async def google_callback(request: Request, session: AsyncSession = Depends(get_
     try:
         token = await oauth.google.authorize_access_token(request)
     except OAuthError:
+        logger.warning("oauth callback failed reason=state_mismatch")
         return RedirectResponse("http://localhost:5173/login?oauth_error=1")
     user_info = token.get("userinfo")
     email = user_info.get("email")
@@ -48,6 +52,7 @@ async def google_callback(request: Request, session: AsyncSession = Depends(get_
     user = await repo.get_by_email(email)
     if not user:
         user = await repo.create_user(email, hashed_password=None)
+    logger.info("user logged in via google id=%s", user.id)
     access_token = create_access_token({"sub": str(user.id)})
     refresh_token = create_refresh_token({"sub": str(user.id)})
     return RedirectResponse(

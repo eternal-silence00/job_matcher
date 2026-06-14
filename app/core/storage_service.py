@@ -1,5 +1,9 @@
 import boto3
 from app.core.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class StorageService:
     def __init__(self):
@@ -17,7 +21,11 @@ class StorageService:
         )
     
     def upload_file(self, file_obj, filename: str, bucket: str = "resumes") -> None:
-        self.client.upload_fileobj(file_obj, bucket, filename)
+        try:
+            self.client.upload_fileobj(file_obj, bucket, filename)
+        except Exception:
+            logger.exception("storage upload failed bucket=%s filename=%s", bucket, filename)
+            raise
 
     def get_file_url(self, filename: str) -> str:
         return self.public_client.generate_presigned_url(
