@@ -1,3 +1,5 @@
+from app.core.logging_config import setup_logging
+setup_logging()   
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
@@ -12,7 +14,7 @@ from app.core.config import settings
 from app.core.embedding_service import EmbeddingService
 
 
-logger = logging.getLogger("app")
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
