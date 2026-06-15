@@ -96,3 +96,10 @@ async def clean_db():
 def disable_rate_limiter():
     from app.core.limiter import limiter
     limiter.enabled = False
+    
+@pytest.fixture(scope="session", autouse=True)
+def disable_rate_limiters():
+    from app.core.limiter import limiter
+    from app.core import limiter as limiter_module
+    limiter.enabled = False
+    limiter_module.email_limiter.hit = lambda *args, **kwargs: True

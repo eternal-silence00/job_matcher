@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from app.auth.schemas import UserResponse, UserCreate, TokenResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
@@ -9,7 +9,7 @@ from app.auth.repository import UserRepository
 from app.core.dependencies import get_current_user
 from app.auth.models import User
 from fastapi.responses import RedirectResponse
-from app.core.limiter import limiter
+from app.core.limiter import limiter, email_limiter, EMAIL_LOGIN_LIMIT
 import logging 
 
 logger = logging.getLogger(__name__)
@@ -34,6 +34,10 @@ async def login(
     data: UserCreate,
     session: AsyncSession = Depends(get_db)
 ):
+    email_key = "login:email:" + data.email.lower()
+    if not email_limiter.hit(EMAIL_LOGIN_LIMIT, email_key):
+        logger.warning("rate limit hit by_email domain=%s", data.email.split("@")[1])
+        raise HTTPException(status_code=429, detail="Too many login attempts for this email. Try again in a minute.")
     service = AuthService(session)
     result = await service.login(data)
     return result
