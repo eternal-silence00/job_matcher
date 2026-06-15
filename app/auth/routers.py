@@ -9,6 +9,7 @@ from app.auth.repository import UserRepository
 from app.core.dependencies import get_current_user
 from app.auth.models import User
 from fastapi.responses import RedirectResponse
+from app.core.limiter import limiter
 import logging 
 
 logger = logging.getLogger(__name__)
@@ -16,7 +17,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.post("/auth/register", response_model=UserResponse, status_code=201)
+@limiter.limit("5/minute")
 async def register(
+    request: Request, 
     data: UserCreate,
     session: AsyncSession = Depends(get_db)
 ):
@@ -25,7 +28,9 @@ async def register(
     return result 
 
 @router.post("/auth/login", response_model=TokenResponse)
+@limiter.limit("10/minute")
 async def login(
+    request: Request,  
     data: UserCreate,
     session: AsyncSession = Depends(get_db)
 ):

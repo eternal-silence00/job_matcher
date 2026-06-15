@@ -1,5 +1,8 @@
 from app.core.logging_config import setup_logging
 setup_logging()   
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
+from app.core.limiter import limiter
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
@@ -24,6 +27,9 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(root_path="/api", lifespan=lifespan)
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
