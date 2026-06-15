@@ -50,11 +50,11 @@ async def async_client():
 async def client_with_token(async_client):
     await async_client.post("/auth/register", json={
         "email": "test@mail.com",
-        "password": "test123"
+        "password": "test12345"
     })
     response = await async_client.post("/auth/login", json={
         "email": "test@mail.com",
-        "password": "test123"
+        "password": "test12345"
     })
     token = response.json()["access_token"]
     async_client.headers["Authorization"] = f"Bearer {token}"
@@ -66,7 +66,7 @@ async def client_with_token(async_client):
 async def admin_client_with_token(async_client):
     await async_client.post("/auth/register", json={
         "email": "admin@mail.com",
-        "password": "admin123"
+        "password": "admin12345"
     })
     
     engine = create_async_engine(TEST_DATABASE_URL)
@@ -76,7 +76,7 @@ async def admin_client_with_token(async_client):
     
     response = await async_client.post("/auth/login", json={
         "email": "admin@mail.com",
-        "password": "admin123"
+        "password": "admin12345"
     })
     token = response.json()["access_token"]
     async_client.headers["Authorization"] = f"Bearer {token}"
