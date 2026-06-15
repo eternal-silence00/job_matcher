@@ -19,7 +19,7 @@ async def test_login(async_client):
     
 async def test_login_wrong_password(async_client):
     await async_client.post("/auth/register", json={"email": "test@mail.com", "password": "test12345"})
-    response = await async_client.post("/auth/login", json={"email": "test@mail.com", "password": "wrong"})
+    response = await async_client.post("/auth/login", json={"email": "test@mail.com", "password": "wrong12345"})
     assert response.status_code == 400
     
 async def test_get_me(client_with_token):

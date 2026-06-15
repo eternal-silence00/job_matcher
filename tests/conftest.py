@@ -91,3 +91,8 @@ async def clean_db():
     async with engine.begin() as conn:
         await conn.execute(text("TRUNCATE users, jobs, resumes RESTART IDENTITY CASCADE"))
     await engine.dispose()
+    
+@pytest.fixture(scope="session", autouse=True)
+def disable_rate_limiter():
+    from app.core.limiter import limiter
+    limiter.enabled = False
