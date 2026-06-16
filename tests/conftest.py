@@ -89,7 +89,7 @@ async def clean_db():
     yield
     engine = create_async_engine(TEST_DATABASE_URL)
     async with engine.begin() as conn:
-        await conn.execute(text("TRUNCATE users, jobs, resumes RESTART IDENTITY CASCADE"))
+        await conn.execute(text("TRUNCATE users, jobs, resumes, refresh_tokens RESTART IDENTITY CASCADE"))
     await engine.dispose()
     
 @pytest.fixture(scope="session", autouse=True)
