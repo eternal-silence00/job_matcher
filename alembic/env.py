@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy import pool
 from alembic import context
 from app.core.base import Base
-from app.auth.models import User
+from app.auth.models import User, RefreshToken
 from app.jobs.models import Job
 from app.resumes.models import Resume
 from app.core.config import settings

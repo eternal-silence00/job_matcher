@@ -31,7 +31,7 @@ async def get_current_user(
             logger.warning("auth failed reason=missing_sub")
             raise HTTPException(status_code=401, detail="Invalid token")
     except ExpiredSignatureError:
-        logger.info("auth failed reason=token_expired")   # это норма, INFO
+        logger.info("auth failed reason=token_expired")  
         raise HTTPException(401, "Token expired")
     except JWTError:
         logger.warning("auth failed reason=invalid_jwt")
