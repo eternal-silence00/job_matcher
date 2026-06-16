@@ -34,12 +34,14 @@ async def login(
     data: UserCreate,
     session: AsyncSession = Depends(get_db)
 ):
+    user_agent = request.headers.get("user-agent")
+    ip = request.client.host
     email_key = "login:email:" + data.email.lower()
     if not email_limiter.hit(EMAIL_LOGIN_LIMIT, email_key):
         logger.warning("rate limit hit by_email domain=%s", data.email.split("@")[1])
         raise HTTPException(status_code=429, detail="Too many login attempts for this email. Try again in a minute.")
     service = AuthService(session)
-    result = await service.login(data)
+    result = await service.login(data, user_agent, ip)
     return result
 
 @router.get("/auth/google")
