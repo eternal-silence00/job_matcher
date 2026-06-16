@@ -8,6 +8,7 @@ from datetime import datetime, timezone, timedelta
 from app.core.config import settings
 from app.auth.schemas import UserCreate
 from app.auth.repository import UserRepository, RefreshTokenRepository
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ def create_access_token(data: dict):
 def create_refresh_token(data: dict):
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "jti": str(uuid.uuid4())})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
@@ -107,6 +108,7 @@ class AuthService:
         if db_token.revoked_at is not None:
             logger.warning("refresh token REUSE detected user_id=%s", db_token.user_id)
             await refresh_repo.revoke_all_for_user(db_token.user_id)
+            await self.session.commit()   
             raise HTTPException(status_code=401, detail="Token reuse detected")
         if db_token.expires_at < datetime.now(timezone.utc):
             logger.warning("refresh failed reason=expired user_id=%s", user_id)
