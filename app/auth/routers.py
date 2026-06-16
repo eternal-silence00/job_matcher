@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.auth.schemas import UserResponse, UserCreate, TokenResponse
+from app.auth.schemas import UserResponse, UserCreate, TokenResponse, RefreshRequest
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.auth.service import AuthService, create_access_token, create_refresh_token
@@ -74,3 +74,17 @@ async def google_callback(request: Request, session: AsyncSession = Depends(get_
 @router.get("/auth/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+@router.post("/auth/refresh", response_model=TokenResponse)
+@limiter.limit("5/minute")
+async def refresh(request: Request, data: RefreshRequest, session: AsyncSession = Depends(get_db)):
+    user_agent = request.headers.get("user-agent")
+    ip = request.client.host
+    service = AuthService(session)
+    return await service.refresh(data.refresh_token, user_agent, ip)
+
+@router.post("/auth/logout", status_code=204)
+async def logout(data: RefreshRequest, session: AsyncSession = Depends(get_db)):
+    service = AuthService(session)
+    await service.logout(data.refresh_token)
+    return None

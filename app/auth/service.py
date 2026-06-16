@@ -1,7 +1,7 @@
 import logging
 from passlib.context import CryptContext
 import hashlib
-from jose import jwt
+from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 from datetime import datetime, timezone, timedelta
@@ -89,7 +89,46 @@ class AuthService:
         )
         logger.info("user logged in id=%s", user.id)
         return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
-
+    
+    
+    async def refresh(self, raw_refresh_token: str, user_agent: str, ip: str):
+        refresh_repo = RefreshTokenRepository(self.session)
+        try:
+            payload = jwt.decode(raw_refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = payload.get("sub")
+        except JWTError:
+            logger.warning("refresh failed reason=invalid_jwt")
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+        token_hash = hash_token(raw_refresh_token)
+        db_token = await refresh_repo.get_by_hash(token_hash)
+        if db_token is None:
+            logger.warning("refresh failed reason=not_in_db user_id=%s", user_id)
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+        if db_token.revoked_at is not None:
+            logger.warning("refresh token REUSE detected user_id=%s", db_token.user_id)
+            await refresh_repo.revoke_all_for_user(db_token.user_id)
+            raise HTTPException(status_code=401, detail="Token reuse detected")
+        if db_token.expires_at < datetime.now(timezone.utc):
+            logger.warning("refresh failed reason=expired user_id=%s", user_id)
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+        new_access = create_access_token({"sub": user_id})
+        new_refresh = create_refresh_token({"sub": user_id})
+        new_hash = hash_token(new_refresh)
+        new_expires = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        new_db_token = await refresh_repo.create_refresh(int(user_id), new_hash, new_expires, user_agent, ip)
+        await refresh_repo.revoke(db_token, replaced_by_id=new_db_token.id)
+        logger.info("token refreshed user_id=%s", user_id)
+        return {"access_token": new_access, "refresh_token": new_refresh, "token_type": "bearer"}
+    
+    async def logout(self, raw_refresh_token: str):
+        refresh_repo = RefreshTokenRepository(self.session)
+        token_hash = hash_token(raw_refresh_token)
+        db_token = await refresh_repo.get_by_hash(token_hash)
+        if db_token and db_token.revoked_at is None:
+            await refresh_repo.revoke(db_token)
+            logger.info("user logged out user_id=%s", db_token.user_id)
+        return  
+        
         
 
 
