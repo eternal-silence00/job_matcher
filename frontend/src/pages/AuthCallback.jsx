@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { tokens } from "../api.js";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -12,8 +13,7 @@ export default function AuthCallback() {
     const accessToken = params.get("access_token");
     const refreshToken = params.get("refresh_token");
     if (accessToken) {
-      localStorage.setItem("access_token", accessToken);
-      if (refreshToken) localStorage.setItem("refresh_token", refreshToken);
+      tokens.set({ access_token: accessToken, refresh_token: refreshToken });
       navigate("/dashboard", { replace: true });
     } else {
       navigate("/login", { replace: true });

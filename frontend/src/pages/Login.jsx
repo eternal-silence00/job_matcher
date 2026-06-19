@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api.js";
+import api, { tokens } from "../api.js";
+
+// FastAPI отдаёт ошибки валидации (422) массивом объектов, а бизнес-ошибки —
+// строкой в detail. Приводим к читаемому тексту.
+function parseError(err) {
+  const detail = err.response?.data?.detail;
+  if (Array.isArray(detail)) {
+    return detail.map((d) => d.msg).join(", ");
+  }
+  return detail || "Ошибка авторизации";
+}
 
 export default function Login() {
   const navigate = useNavigate();
@@ -19,11 +29,10 @@ export default function Login() {
         await api.post("/auth/register", { email, password });
       }
       const { data } = await api.post("/auth/login", { email, password });
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
+      tokens.set(data);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.detail || "Ошибка авторизации");
+      setError(parseError(err));
     } finally {
       setLoading(false);
     }

@@ -1,27 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api.js";
-
-function fixMojibake(text) {
-  if (!/[À-ÿ]/.test(text)) return text;
-  const bytes = new Uint8Array(text.length);
-  for (let i = 0; i < text.length; i++) {
-    const c = text.charCodeAt(i);
-    if (c > 0xff) return text;
-    bytes[i] = c;
-  }
-  try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-  } catch {
-    return text;
-  }
-}
-
-function cleanDescription(raw) {
-  if (!raw) return "";
-  const text = new DOMParser().parseFromString(raw, "text/html").body.textContent || "";
-  return fixMojibake(text).replace(/\s+/g, " ").trim();
-}
+import api, { tokens } from "../api.js";
+import { cleanDescription } from "../lib/text.js";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -80,10 +60,17 @@ export default function Dashboard() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      if (tokens.refresh) {
+        await api.post("/auth/logout", { refresh_token: tokens.refresh });
+      }
+    } catch {
+      // даже если запрос упал — всё равно чистим клиент и выходим
+    } finally {
+      tokens.clear();
+      navigate("/login");
+    }
   };
 
   const formatSalary = (from, to) => {
