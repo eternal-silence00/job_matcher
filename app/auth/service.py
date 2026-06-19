@@ -130,7 +130,26 @@ class AuthService:
             await refresh_repo.revoke(db_token)
             logger.info("user logged out user_id=%s", db_token.user_id)
         return  
-        
+    
+    async def logout_all(self, user_id: int):
+        refresh_repo = RefreshTokenRepository(self.session)
+        await refresh_repo.revoke_all_for_user(user_id)
+        logger.info("all tokens revoked for user_id=%s", user_id)
+    
+    
+    async def oauth_login(self, email: str, user_agent: str, ip: str):
+        repo = UserRepository(self.session)
+        refresh_repo = RefreshTokenRepository(self.session)
+        user = await repo.get_by_email(email)
+        if not user:
+            user = await repo.create_user(email, hashed_password=None)
+        access_token = create_access_token({"sub": str(user.id)})
+        refresh_token = create_refresh_token({"sub": str(user.id)})
+        token_hash = hash_token(refresh_token)
+        expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        await refresh_repo.create_refresh(user.id, token_hash, expires_at, user_agent, ip)
+        logger.info("user logged in via google id=%s", user.id)
+        return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
         
 
 

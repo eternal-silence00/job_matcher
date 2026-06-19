@@ -5,7 +5,7 @@ from app.core.database import get_db
 from app.auth.service import AuthService, create_access_token, create_refresh_token
 from app.auth.oauth import oauth
 from starlette.requests import Request
-from app.auth.repository import UserRepository
+from authlib.integrations.base_client.errors import OAuthError
 from app.core.dependencies import get_current_user
 from app.auth.models import User
 from fastapi.responses import RedirectResponse
@@ -51,23 +51,18 @@ async def google_login(request: Request):
 
 @router.get("/auth/google/callback")
 async def google_callback(request: Request, session: AsyncSession = Depends(get_db)):
-    from authlib.integrations.base_client.errors import OAuthError
     try:
         token = await oauth.google.authorize_access_token(request)
     except OAuthError:
         logger.warning("oauth callback failed reason=state_mismatch")
         return RedirectResponse("http://localhost:5173/login?oauth_error=1")
-    user_info = token.get("userinfo")
-    email = user_info.get("email")
-    repo = UserRepository(session)
-    user = await repo.get_by_email(email)
-    if not user:
-        user = await repo.create_user(email, hashed_password=None)
-    logger.info("user logged in via google id=%s", user.id)
-    access_token = create_access_token({"sub": str(user.id)})
-    refresh_token = create_refresh_token({"sub": str(user.id)})
+    email = token.get("userinfo").get("email")
+    user_agent = request.headers.get("user-agent")
+    ip = request.client.host
+    service = AuthService(session)
+    tokens = await service.oauth_login(email, user_agent, ip)
     return RedirectResponse(
-        f"http://localhost:5173/auth/callback?access_token={access_token}&refresh_token={refresh_token}",
+        f"http://localhost:5173/auth/callback?access_token={tokens['access_token']}&refresh_token={tokens['refresh_token']}",
         status_code=302,
     )
 
@@ -87,4 +82,13 @@ async def refresh(request: Request, data: RefreshRequest, session: AsyncSession 
 async def logout(data: RefreshRequest, session: AsyncSession = Depends(get_db)):
     service = AuthService(session)
     await service.logout(data.refresh_token)
+    return None
+
+@router.post("/auth/logout-all", status_code=204)
+async def logout_all(
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+):
+    service = AuthService(session)
+    await service.logout_all(current_user.id)
     return None

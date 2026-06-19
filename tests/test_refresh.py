@@ -48,3 +48,12 @@ async def test_logout_idempotent(async_client):
     await async_client.post("/auth/logout", json={"refresh_token": tokens["refresh_token"]})
     r = await async_client.post("/auth/logout", json={"refresh_token": tokens["refresh_token"]})
     assert r.status_code == 204
+
+
+async def test_logout_all_revokes_everything(async_client):
+    tokens = await _register_and_login(async_client)
+    headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+    r = await async_client.post("/auth/logout-all", headers=headers)
+    assert r.status_code == 204
+    r2 = await async_client.post("/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
+    assert r2.status_code == 401
