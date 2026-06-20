@@ -26,14 +26,14 @@
 
 ## Стек
 
-**Backend:** FastAPI, SQLAlchemy (async), PostgreSQL + pgvector, Alembic
-**Очереди и кеш:** Celery, RabbitMQ, Redis
-**Хранилище файлов:** MinIO (S3-совместимое)
-**ML:** fastembed (модель bge-small-en-v1.5, 384-мерные эмбеддинги)
-**Аутентификация:** python-jose (JWT), Authlib (OAuth2), passlib (bcrypt)
-**Frontend:** React, Vite, TailwindCSS, axios
-**Инфраструктура:** Docker Compose, Nginx
-**CI:** GitHub Actions (pytest на каждый push и pull request)
+- Backend: FastAPI, SQLAlchemy (async), PostgreSQL + pgvector, Alembic
+- Очереди и кеш: Celery, RabbitMQ, Redis
+- Хранилище файлов: MinIO (S3-совместимое)
+- ML: fastembed (модель bge-small-en-v1.5, 384-мерные эмбеддинги)
+- Аутентификация: python-jose (JWT), Authlib (OAuth2), passlib (bcrypt)
+- Frontend: React, Vite, TailwindCSS, axios
+- Инфраструктура: Docker Compose, Nginx
+- CI: GitHub Actions (pytest на каждый push и pull request)
 
 ## Архитектура
 
@@ -109,9 +109,4 @@ docker compose exec app pytest tests/ -v
 ![Login](docs/login.png)
 ![Dashboard](docs/dashboard.png)
 
-## Возможные улучшения
 
-- Перенос конфигурации хостов (frontend/backend URL) из кода в settings для деплоя
-- Хранение refresh-токена в HttpOnly cookie вместо localStorage (защита от XSS)
-- Нормализация кодировки описаний вакансий на этапе парсинга
-- Расширение покрытия тестами Celery-задач
