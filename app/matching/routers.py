@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from app.core.dependencies import get_current_user
 from app.core.database import get_db
 from app.matching.service import MatchingService
@@ -12,8 +12,9 @@ router = APIRouter()
 async def get_matching_jobs(
     session: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-    limit: int = 20
+    limit: int = 20,
+    hours: int | None = Query(None, ge=1, le=720)
 ):
     service = MatchingService(session)
-    result = await service.match_jobs(user.id, limit)
+    result = await service.match_jobs(user.id, limit, hours)
     return result

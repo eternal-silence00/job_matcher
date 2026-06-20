@@ -11,6 +11,7 @@ export default function Dashboard() {
   const [jobs, setJobs] = useState([]);
   const [loadingJobs, setLoadingJobs] = useState(false);
   const [error, setError] = useState("");
+  const [hours, setHours] = useState("");
 
   const loadResume = async () => {
     try {
@@ -25,7 +26,8 @@ export default function Dashboard() {
     setLoadingJobs(true);
     setError("");
     try {
-      const { data } = await api.get("/matching/jobs");
+      const params = hours ? { hours: Number(hours) } : {};
+      const { data } = await api.get("/matching/jobs", { params });
       setJobs(data);
     } catch (err) {
       setError(err.response?.data?.detail || "Не удалось загрузить вакансии");
@@ -36,8 +38,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadResume();
-    loadJobs();
   }, []);
+
+  // перезагружаем вакансии при первом рендере и при смене фильтра
+  useEffect(() => {
+    loadJobs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hours]);
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -131,12 +138,24 @@ export default function Dashboard() {
             <h2 className="text-lg font-semibold text-gray-900">
               Подходящие вакансии
             </h2>
-            <button
-              onClick={loadJobs}
-              className="text-sm text-indigo-600 hover:text-indigo-800"
-            >
-              Обновить
-            </button>
+            <div className="flex items-center gap-3">
+              <select
+                value={hours}
+                onChange={(e) => setHours(e.target.value)}
+                className="text-sm border border-gray-300 rounded-lg px-2 py-1.5 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">За всё время</option>
+                <option value="24">За 24 часа</option>
+                <option value="72">За 3 дня</option>
+                <option value="168">За неделю</option>
+              </select>
+              <button
+                onClick={loadJobs}
+                className="text-sm text-indigo-600 hover:text-indigo-800"
+              >
+                Обновить
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -149,7 +168,9 @@ export default function Dashboard() {
             <div className="text-gray-500 text-sm">Загрузка...</div>
           ) : jobs.length === 0 ? (
             <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-8 text-center text-gray-500">
-              Загрузите резюме, чтобы увидеть подходящие вакансии
+              {resume
+                ? "Нет подходящих вакансий за выбранный период"
+                : "Загрузите резюме, чтобы увидеть подходящие вакансии"}
             </div>
           ) : (
             <div className="space-y-3">

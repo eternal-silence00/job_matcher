@@ -34,12 +34,16 @@ class JobRepository:
         result = await self.session.execute(select(Job).where(Job.id == job_id))
         return result.scalar_one_or_none()
     
-    async def find_simular(self, embedding: list, limit: int):
+    async def find_simular(self, embedding: list, limit: int, hours: int | None = None ):
         embedding=str([float(x) for x in embedding])
-        result = await self.session.execute(select(Job).
-                                            order_by(text("embedding <-> CAST(:embedding AS vector)").bindparams(embedding=embedding))
-                                            .limit(limit)
-                                            )
+        query = select(Job).order_by(
+            text("embedding <-> CAST(:embedding AS vector)").bindparams(embedding=embedding)
+        )
+        if hours is not None:
+            cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+            query = query.where(Job.created_at >= cutoff)
+        query = query.limit(limit)
+        result = await self.session.execute(query)
         return result.scalars().all()
     
     async def get_by_url(self, url: str):
